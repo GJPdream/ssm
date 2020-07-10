@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+	http://www.springframework.org/schema/beans/spring-beans.xsd
+	http://www.springframework.org/schema/context
+	http://www.springframework.org/schema/context/spring-context.xsd
+	http://www.springframework.org/schema/aop
+	http://www.springframework.org/schema/aop/spring-aop.xsd
+	http://www.springframework.org/schema/tx
+	http://www.springframework.org/schema/tx/spring-tx.xsd">
+
+
+    <!--开始扫描的包,处理controller层别的地方的直接都扫描-->
+    <context:component-scan base-package="cn.itcast">
+        <context:exclude-filter type="annotation" expression="org.springframework.stereotype.Controller"/>
+    </context:component-scan>
+    <!--连接池的配置信息-->
+    <bean id="comboPooledDataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource">
+        <property name="driverClass" value="com.mysql.cj.jdbc.Driver"></property>
+        <property name="jdbcUrl" value="jdbc:mysql://127.0.0.1:3306/ssm?serverTimezone=UTC"/>
+        <property name="user" value="root"></property>
+        <property name="password" value="123456"/>
+    </bean>
+    <!--配置一个工厂-->
+    <bean id="sqlSessionFactoryBean" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="dataSource" ref="comboPooledDataSource"/>
+       <!-- 传入一个pagehelper的插件-->
+        <property name="plugins">
+            <array>
+                <!--传入插件对象-->
+                <bean class="com.github.pagehelper.PageInterceptor">
+                    <property name="properties">
+                        <props>
+                            <!--下面的mysql是关于我们用的是什么数据库-->
+                            <prop key="helperDialect">mysql</prop>
+                            <prop key="reasonable">true</prop>
+                        </props>
+                    </property>
+                </bean>
+            </array>
+        </property>
+    </bean>
+    <!--引入配置文件-->
+    <bean id="mapperScannerConfigurer" class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="basePackage" value="cn.itcast.dao"/>
+    </bean>
+    <!-- 事务管理-->
+    <bean id="dataSourceTransactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="comboPooledDataSource"/>
+    </bean>
+    <!-- 事务的通知-->
+    <!--<tx:advice id="txadvice" transaction-manager="dataSourceTransactionManager">
+        <tx:attributes>
+            <tx:method name="find*" read-only="true"/>
+            <tx:method name="*" isolation="READ_COMMITTED" propagation="REQUIRED"></tx:method>
+        </tx:attributes>
+        &lt;!&ndash;配置增强&ndash;&gt;
+    </tx:advice>
+    <aop:config>
+        <aop:advisor advice-ref="txadvice" pointcut="execution(* cn.itcast.service.impl.*ServiceImpl.*(..))"/>
+    </aop:config>-->
+    <tx:annotation-driven transaction-manager="dataSourceTransactionManager"/>
+</beans>
